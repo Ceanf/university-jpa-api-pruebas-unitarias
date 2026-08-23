@@ -1,0 +1,425 @@
+import React, { useState, useEffect, useCallback } from "react";
+
+const ENTITIES = [
+{ key: "departments", label: "Departments", singular: "Department", fields: [{ name: "name", label: "Name" }] },
+{ key: "lecturers", label: "Lecturers", singular: "Lecturer", fields: [{ name: "name", label: "Name" }] },
+{ key: "courses", label: "Courses", singular: "Course", fields: [{ name: "title", label: "Title" }, { name: "code", label: "Code" }] },
+{ key: "students", label: "Students", singular: "Student", fields: [{ name: "name", label: "Name" }] },
+];
+
+function useApi(baseUrl) {
+const call = useCallback(
+async (path, options = {}) => {
+const res = await fetch(`${baseUrl}${path}`, {
+headers: { "Content-Type": "application/json" },
+...options,
+});
+if (!res.ok) {
+let msg = `Request failed (${res.status})`;
+try {
+const body = await res.json();
+if (body.message) msg = body.message;
+} catch (_) {}
+throw new Error(msg);
+}
+if (res.status === 204) return null;
+return res.json();
+},
+[baseUrl]
+);
+return call;
+}
+
+function Chip({ children }) {
+return (
+<span
+        style={{
+        display: "inline-block",
+padding: "3px 10px",
+marginRight: 6,
+marginBottom: 6,
+borderRadius: 3,
+fontSize: 12,
+letterSpacing: "0.02em",
+background: "#EDE6D6",
+color: "#4A4032",
+border: "1px solid #D8CCB0",
+fontFamily: "'IBM Plex Mono', monospace",
+}}
+>
+{children}
+</span>
+);
+}
+
+function RecordCard({ entity, record, onAssign, onDelete, allRecords }) {
+const idxLine = `№ ${String(record.id).padStart(3, "0")}`;
+
+const relationships = [];
+if (entity.key === "departments") {
+relationships.push({ label: "Lecturers", items: record.lecturers, empty: "no lecturers assigned" });
+relationships.push({ label: "Students", items: record.students, empty: "no students enrolled" });
+}
+if (entity.key === "lecturers") {
+relationships.push({ label: "Department", single: record.department, empty: "unassigned" });
+relationships.push({ label: "Teaches", items: record.courses, empty: "no courses assigned" });
+}
+if (entity.key === "courses") {
+relationships.push({ label: "Lecturer", single: record.lecturer, empty: "unassigned" });
+relationships.push({ label: "Students", items: record.students, empty: "no students enrolled" });
+}
+if (entity.key === "students") {
+relationships.push({ label: "Department", single: record.department, empty: "unassigned" });
+relationships.push({ label: "Courses", items: record.courses, empty: "not enrolled in anything" });
+}
+
+return (
+<div
+        style={{
+        background: "#FBF9F4",
+border: "1px solid #DDD2B8",
+borderLeft: "3px solid #8A6D3B",
+padding: "16px 20px",
+marginBottom: 12,
+}}
+>
+<div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+<div>
+    <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: "#9A8B6A", letterSpacing: "0.08em" }}>
+    {idxLine}
+</div>
+<div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 21, color: "#2C2418", marginTop: 2 }}>
+{record.name || record.title}
+</div>
+{record.code && (
+<div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: "#8A6D3B", marginTop: 2 }}>
+{record.code}
+</div>
+)}
+</div>
+<button
+        onClick={() => onDelete(entity.key, record.id)}
+style={{
+background: "none",
+border: "1px solid #C9403A",
+color: "#C9403A",
+fontSize: 11,
+padding: "5px 10px",
+cursor: "pointer",
+fontFamily: "'IBM Plex Mono', monospace",
+letterSpacing: "0.05em",
+}}
+>
+remove
+</button>
+</div>
+
+<div style={{ marginTop: 12, borderTop: "1px dashed #DDD2B8", paddingTop: 10 }}>
+{relationships.map((rel) => (
+<div key={rel.label} style={{ marginBottom: 8 }}>
+    <div style={{ fontSize: 11, color: "#8A6D3B", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+    {rel.label}
+</div>
+{rel.single !== undefined ? (
+rel.single ? <Chip>{rel.single.name}</Chip> : <span style={{ fontSize: 12, color: "#B0A488", fontStyle: "italic" }}>{rel.empty}</span>
+) : rel.items && rel.items.length > 0 ? (
+rel.items.map((item) => <Chip key={item.id}>{item.name || item.title}</Chip>)
+) : (
+<span style={{ fontSize: 12, color: "#B0A488", fontStyle: "italic" }}>{rel.empty}</span>
+)}
+</div>
+))}
+</div>
+
+{onAssign && (
+<div style={{ marginTop: 8 }}>
+    <AssignmentControl entity={entity} record={record} onAssign={onAssign} allRecords={allRecords} />
+</div>
+)}
+</div>
+);
+}
+
+function AssignmentControl({ entity, record, onAssign, allRecords }) {
+const [target, setTarget] = useState("");
+const [linkType, setLinkType] = useState("");
+
+let options = [];
+if (entity.key === "departments") {
+options = [
+{ value: "lecturers", label: "Add lecturer", list: allRecords.lecturers },
+{ value: "students", label: "Add student", list: allRecords.students },
+];
+} else if (entity.key === "lecturers") {
+options = [{ value: "courses", label: "Assign to teach course", list: allRecords.courses }];
+} else if (entity.key === "courses") {
+options = [{ value: "students", label: "Enroll student", list: allRecords.students }];
+}
+
+if (options.length === 0) return null;
+const active = linkType || options[0].value;
+const activeOption = options.find((o) => o.value === active);
+
+return (
+<div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+{options.length > 1 && (
+<select
+        value={active}
+        onChange={(e) => { setLinkType(e.target.value); setTarget(""); }}
+style={selectStyle}
+>
+{options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+</select>
+)}
+<select value={target} onChange={(e) => setTarget(e.target.value)} style={{ ...selectStyle, minWidth: 160 }}>
+<option value="">{options.length === 1 ? activeOption.label : "choose..."}</option>
+{(activeOption.list || []).map((item) => (
+<option key={item.id} value={item.id}>{item.name || item.title}</option>
+))}
+</select>
+<button
+        disabled={!target}
+        onClick={() => { onAssign(entity.key, record.id, active, target); setTarget(""); }}
+style={{
+background: target ? "#2C2418" : "#D8CCB0",
+color: "#FBF9F4",
+border: "none",
+padding: "6px 12px",
+fontSize: 11,
+letterSpacing: "0.05em",
+cursor: target ? "pointer" : "default",
+fontFamily: "'IBM Plex Mono', monospace",
+}}
+>
+link →
+</button>
+</div>
+);
+}
+
+const selectStyle = {
+fontSize: 12,
+padding: "5px 8px",
+border: "1px solid #DDD2B8",
+background: "#FFFFFF",
+color: "#2C2418",
+fontFamily: "'IBM Plex Mono', monospace",
+};
+
+function CreateForm({ entity, onCreate }) {
+const initial = Object.fromEntries(entity.fields.map((f) => [f.name, ""]));
+const [values, setValues] = useState(initial);
+const [busy, setBusy] = useState(false);
+
+const submit = async (e) => {
+e.preventDefault();
+setBusy(true);
+try {
+await onCreate(entity.key, values);
+setValues(initial);
+} finally {
+setBusy(false);
+}
+};
+
+return (
+<form onSubmit={submit} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 20 }}>
+{entity.fields.map((f) => (
+<input
+        key={f.name}
+        placeholder={f.label}
+        value={values[f.name]}
+        onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}
+required
+style={{
+padding: "9px 12px",
+border: "1px solid #DDD2B8",
+background: "#FFFFFF",
+fontSize: 14,
+fontFamily: "'IBM Plex Mono', monospace",
+flex: "1 1 160px",
+minWidth: 140,
+}}
+/>
+))}
+<button
+        type="submit"
+        disabled={busy}
+        style={{
+        background: "#8A6D3B",
+color: "#FBF9F4",
+border: "none",
+padding: "10px 18px",
+fontSize: 13,
+letterSpacing: "0.04em",
+cursor: "pointer",
+fontFamily: "'IBM Plex Mono', monospace",
+}}
+>
+{busy ? "adding…" : `+ new ${entity.singular.toLowerCase()}`}
+</button>
+</form>
+);
+}
+
+export default function UniversityDashboard() {
+const [baseUrl, setBaseUrl] = useState("http://localhost:8080");
+const [urlDraft, setUrlDraft] = useState(baseUrl);
+const [active, setActive] = useState("departments");
+const [data, setData] = useState({ departments: [], lecturers: [], courses: [], students: [] });
+const [status, setStatus] = useState({ loading: false, error: null });
+
+const api = useApi(baseUrl);
+
+const loadAll = useCallback(async () => {
+setStatus({ loading: true, error: null });
+try {
+const [departments, lecturers, courses, students] = await Promise.all([
+api("/api/departments"),
+api("/api/lecturers"),
+api("/api/courses"),
+api("/api/students"),
+]);
+setData({ departments, lecturers, courses, students });
+setStatus({ loading: false, error: null });
+} catch (err) {
+setStatus({ loading: false, error: err.message || "Could not reach the API" });
+}
+}, [api]);
+
+useEffect(() => {
+loadAll();
+}, [loadAll]);
+
+const handleCreate = async (key, values) => {
+const body =
+key === "courses"
+? { title: values.title, code: values.code }
+: { name: values.name };
+await api(`/api/${key}`, { method: "POST", body: JSON.stringify(body) });
+await loadAll();
+};
+
+const handleDelete = async (key, id) => {
+await api(`/api/${key}/${id}`, { method: "DELETE" });
+await loadAll();
+};
+
+const handleAssign = async (key, recordId, linkType, targetId) => {
+let path = "";
+if (key === "departments") path = `/api/departments/${recordId}/${linkType}/${targetId}`;
+if (key === "lecturers") path = `/api/lecturers/${recordId}/courses/${targetId}`;
+if (key === "courses") path = `/api/courses/${recordId}/students/${targetId}`;
+if (!path) return;
+await api(path, { method: "POST" });
+await loadAll();
+};
+
+const currentEntity = ENTITIES.find((e) => e.key === active);
+const records = data[active] || [];
+
+return (
+<div
+        style={{
+        minHeight: "100vh",
+background: "#F2EDE4",
+fontFamily: "'IBM Plex Mono', monospace",
+color: "#2C2418",
+padding: "0 0 60px",
+}}
+>
+<link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+/>
+
+<header style={{ borderBottom: "3px double #2C2418", padding: "28px 32px 20px" }}>
+<div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
+<div>
+    <div style={{ fontSize: 11, letterSpacing: "0.18em", color: "#8A6D3B", marginBottom: 4 }}>
+    REGISTRAR'S OFFICE — LIVE INDEX
+</div>
+<h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 34, margin: 0, fontWeight: 700 }}>
+University Ledger
+</h1>
+</div>
+<div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+<span style={{ fontSize: 11, color: "#8A6D3B" }}>API</span>
+<input
+        value={urlDraft}
+        onChange={(e) => setUrlDraft(e.target.value)}
+onBlur={() => setBaseUrl(urlDraft)}
+onKeyDown={(e) => e.key === "Enter" && setBaseUrl(urlDraft)}
+style={{ ...selectStyle, width: 200 }}
+/>
+<button onClick={loadAll} style={{ ...selectStyle, cursor: "pointer", background: "#2C2418", color: "#FBF9F4" }}>
+refresh
+</button>
+</div>
+</div>
+</header>
+
+<nav style={{ display: "flex", borderBottom: "1px solid #DDD2B8", padding: "0 32px" }}>
+{ENTITIES.map((e) => (
+<button
+        key={e.key}
+        onClick={() => setActive(e.key)}
+style={{
+background: "none",
+border: "none",
+borderBottom: active === e.key ? "2px solid #8A6D3B" : "2px solid transparent",
+padding: "14px 20px 12px",
+fontSize: 13,
+letterSpacing: "0.05em",
+color: active === e.key ? "#2C2418" : "#9A8B6A",
+cursor: "pointer",
+fontFamily: "'IBM Plex Mono', monospace",
+fontWeight: active === e.key ? 600 : 400,
+}}
+>
+{e.label.toUpperCase()} <span style={{ opacity: 0.6 }}>({(data[e.key] || []).length})</span>
+</button>
+))}
+</nav>
+
+<main style={{ maxWidth: 760, margin: "0 auto", padding: "28px 32px 0" }}>
+{status.error && (
+<div
+        style={{
+        background: "#FBEAE9",
+border: "1px solid #C9403A",
+color: "#8C2B26",
+padding: "12px 16px",
+marginBottom: 20,
+fontSize: 13,
+}}
+>
+Couldn't reach the API at <strong>{baseUrl}</strong> — {status.error}. Make sure the Spring Boot app is
+running and CORS is configured.
+</div>
+)}
+
+<CreateForm entity={currentEntity} onCreate={handleCreate} />
+
+{status.loading ? (
+<div style={{ color: "#9A8B6A", fontSize: 13 }}>loading…</div>
+) : records.length === 0 ? (
+<div style={{ color: "#9A8B6A", fontSize: 13, fontStyle: "italic", padding: "20px 0" }}>
+No {currentEntity.label.toLowerCase()} recorded yet — add one above.
+</div>
+) : (
+records.map((record) => (
+<RecordCard
+        key={record.id}
+        entity={currentEntity}
+        record={record}
+        onDelete={handleDelete}
+        onAssign={currentEntity.key !== "students" ? handleAssign : null}
+allRecords={data}
+/>
+))
+)}
+</main>
+</div>
+);
+}

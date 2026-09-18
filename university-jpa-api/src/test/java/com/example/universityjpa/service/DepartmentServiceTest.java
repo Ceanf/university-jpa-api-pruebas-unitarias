@@ -169,6 +169,28 @@ class DepartmentServiceTest {
     }
 
     @Test
+    void addLecturer_llamarDosVecesConElMismoDocenteLoDuplicaEnLaLista() {
+        Department department = new Department("Ingenieria");
+        department.setId(1L);
+
+        Lecturer lecturer = mock(Lecturer.class);
+
+        when(departmentRepository.findById(1L))
+                .thenReturn(Optional.of(department));
+
+        when(lecturerRepository.findById(10L))
+                .thenReturn(Optional.of(lecturer));
+
+        departmentService.addLecturer(1L, 10L);
+        departmentService.addLecturer(1L, 10L);
+
+        // department.getLecturers() es un List, no un Set: a diferencia de
+        // CourseService.enrollStudent (que usa Set y no duplica), aqui llamar
+        // dos veces con el mismo docente lo agrega dos veces.
+        assertEquals(2, department.getLecturers().size());
+    }
+
+    @Test
     void addLecturer_deberiaLanzarExcepcionSiNoExisteElDocente() {
         Department department = new Department("Ingenieria");
         department.setId(1L);

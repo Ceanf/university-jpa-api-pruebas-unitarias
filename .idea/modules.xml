@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/university-jpa-api.iml" filepath="$PROJECT_DIR$/.idea/university-jpa-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/university-jpa-api/university-jpa-api.iml" filepath="$PROJECT_DIR$/university-jpa-api/university-jpa-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/university-jpa-api-pruebas-unitarias.iml" filepath="$PROJECT_DIR$/.idea/university-jpa-api-pruebas-unitarias.iml" />
     </modules>
   </component>
 </project>

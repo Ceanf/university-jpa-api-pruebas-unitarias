@@ -39,15 +39,18 @@ class DepartmentServiceTest {
 
     @Test
     void create_deberiaCrearDepartamentoCorrectamente() {
+        // Arrange
         Department department = new Department("Ingenieria");
         department.setId(1L);
 
         when(departmentRepository.save(any(Department.class)))
                 .thenReturn(department);
 
+        // Act
         DepartmentResponse response =
                 departmentService.create("Ingenieria");
 
+        // Assert
         assertNotNull(response);
 
         verify(departmentRepository).save(any(Department.class));
@@ -55,6 +58,7 @@ class DepartmentServiceTest {
 
     @Test
     void getAll_deberiaRetornarTodosLosDepartamentos() {
+        // Arrange
         Department department1 = new Department("Ingenieria");
         department1.setId(1L);
 
@@ -64,9 +68,11 @@ class DepartmentServiceTest {
         when(departmentRepository.findAll())
                 .thenReturn(List.of(department1, department2));
 
+        // Act
         DepartmentResponse[] responses =
                 departmentService.getAll();
 
+        // Assert
         assertNotNull(responses);
         assertEquals(2, responses.length);
 
@@ -75,12 +81,15 @@ class DepartmentServiceTest {
 
     @Test
     void getAll_deberiaRetornarArregloVacio() {
+        // Arrange
         when(departmentRepository.findAll())
                 .thenReturn(List.of());
 
+        // Act
         DepartmentResponse[] responses =
                 departmentService.getAll();
 
+        // Assert
         assertNotNull(responses);
         assertEquals(0, responses.length);
 
@@ -89,15 +98,18 @@ class DepartmentServiceTest {
 
     @Test
     void getById_deberiaRetornarDepartamentoCuandoExiste() {
+        // Arrange
         Department department = new Department("Ingenieria");
         department.setId(1L);
 
         when(departmentRepository.findById(1L))
                 .thenReturn(Optional.of(department));
 
+        // Act
         DepartmentResponse response =
                 departmentService.getById(1L);
 
+        // Assert
         assertNotNull(response);
 
         verify(departmentRepository).findById(1L);
@@ -105,9 +117,11 @@ class DepartmentServiceTest {
 
     @Test
     void getById_deberiaLanzarExcepcionCuandoNoExiste() {
+        // Arrange
         when(departmentRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
+        // Act + Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> departmentService.getById(99L)
@@ -118,23 +132,28 @@ class DepartmentServiceTest {
 
     @Test
     void delete_deberiaEliminarDepartamentoCuandoExiste() {
+        // Arrange
         Department department = new Department("Ingenieria");
         department.setId(1L);
 
         when(departmentRepository.findById(1L))
                 .thenReturn(Optional.of(department));
 
-        departmentService.delete(1L);
+        // Act
+        assertDoesNotThrow(() -> departmentService.delete(1L));
 
+        // Assert
         verify(departmentRepository).findById(1L);
         verify(departmentRepository).delete(department);
     }
 
     @Test
     void delete_deberiaLanzarExcepcionCuandoNoExiste() {
+        // Arrange
         when(departmentRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
+        // Act + Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> departmentService.delete(99L)
@@ -146,6 +165,7 @@ class DepartmentServiceTest {
 
     @Test
     void addLecturer_deberiaAgregarDocenteAlDepartamento() {
+        // Arrange
         Department department = new Department("Ingenieria");
         department.setId(1L);
 
@@ -157,9 +177,11 @@ class DepartmentServiceTest {
         when(lecturerRepository.findById(10L))
                 .thenReturn(Optional.of(lecturer));
 
+        // Act
         DepartmentResponse response =
                 departmentService.addLecturer(1L, 10L);
 
+        // Assert
         assertNotNull(response);
 
         verify(lecturer).setDepartment(department);
@@ -170,6 +192,7 @@ class DepartmentServiceTest {
 
     @Test
     void addLecturer_llamarDosVecesConElMismoDocenteLoDuplicaEnLaLista() {
+        // Arrange
         Department department = new Department("Ingenieria");
         department.setId(1L);
 
@@ -181,17 +204,20 @@ class DepartmentServiceTest {
         when(lecturerRepository.findById(10L))
                 .thenReturn(Optional.of(lecturer));
 
+        // Act
         departmentService.addLecturer(1L, 10L);
         departmentService.addLecturer(1L, 10L);
 
+        // Assert
         // department.getLecturers() es un List, no un Set: a diferencia de
-        // CourseService.enrollStudent (que usa Set y no duplica), aqui llamar
-        // dos veces con el mismo docente lo agrega dos veces.
+        // CourseService.enrollStudent (que usa Set y no duplica), aqui
+        // llamar dos veces con el mismo docente lo agrega dos veces.
         assertEquals(2, department.getLecturers().size());
     }
 
     @Test
     void addLecturer_deberiaLanzarExcepcionSiNoExisteElDocente() {
+        // Arrange
         Department department = new Department("Ingenieria");
         department.setId(1L);
 
@@ -201,6 +227,7 @@ class DepartmentServiceTest {
         when(lecturerRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
+        // Act + Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> departmentService.addLecturer(1L, 99L)
@@ -212,6 +239,7 @@ class DepartmentServiceTest {
 
     @Test
     void addStudent_deberiaAgregarEstudianteAlDepartamento() {
+        // Arrange
         Department department = new Department("Ingenieria");
         department.setId(1L);
 
@@ -223,9 +251,11 @@ class DepartmentServiceTest {
         when(studentRepository.findById(10L))
                 .thenReturn(Optional.of(student));
 
+        // Act
         DepartmentResponse response =
                 departmentService.addStudent(1L, 10L);
 
+        // Assert
         assertNotNull(response);
 
         verify(student).setDepartment(department);
@@ -236,6 +266,7 @@ class DepartmentServiceTest {
 
     @Test
     void addStudent_deberiaLanzarExcepcionSiNoExisteElEstudiante() {
+        // Arrange
         Department department = new Department("Ingenieria");
         department.setId(1L);
 
@@ -245,6 +276,7 @@ class DepartmentServiceTest {
         when(studentRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
+        // Act + Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> departmentService.addStudent(1L, 99L)

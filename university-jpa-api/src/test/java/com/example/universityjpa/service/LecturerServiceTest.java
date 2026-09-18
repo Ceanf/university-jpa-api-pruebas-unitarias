@@ -35,15 +35,18 @@ class LecturerServiceTest {
 
     @Test
     void create_deberiaCrearDocenteCorrectamente() {
+        // Arrange
         Lecturer lecturer = new Lecturer("Juan Perez");
         lecturer.setId(1L);
 
         when(lecturerRepository.save(any(Lecturer.class)))
                 .thenReturn(lecturer);
 
+        // Act
         LecturerResponse response =
                 lecturerService.create("Juan Perez");
 
+        // Assert
         assertNotNull(response);
 
         verify(lecturerRepository).save(any(Lecturer.class));
@@ -51,6 +54,7 @@ class LecturerServiceTest {
 
     @Test
     void getAll_deberiaRetornarTodosLosDocentes() {
+        // Arrange
         Lecturer lecturer1 = new Lecturer("Juan Perez");
         lecturer1.setId(1L);
 
@@ -60,9 +64,11 @@ class LecturerServiceTest {
         when(lecturerRepository.findAll())
                 .thenReturn(List.of(lecturer1, lecturer2));
 
+        // Act
         LecturerResponse[] responses =
                 lecturerService.getAll();
 
+        // Assert
         assertNotNull(responses);
         assertEquals(2, responses.length);
 
@@ -71,12 +77,15 @@ class LecturerServiceTest {
 
     @Test
     void getAll_deberiaRetornarArregloVacio() {
+        // Arrange
         when(lecturerRepository.findAll())
                 .thenReturn(List.of());
 
+        // Act
         LecturerResponse[] responses =
                 lecturerService.getAll();
 
+        // Assert
         assertNotNull(responses);
         assertEquals(0, responses.length);
 
@@ -85,15 +94,18 @@ class LecturerServiceTest {
 
     @Test
     void getById_deberiaRetornarDocenteCuandoExiste() {
+        // Arrange
         Lecturer lecturer = new Lecturer("Juan Perez");
         lecturer.setId(1L);
 
         when(lecturerRepository.findById(1L))
                 .thenReturn(Optional.of(lecturer));
 
+        // Act
         LecturerResponse response =
                 lecturerService.getById(1L);
 
+        // Assert
         assertNotNull(response);
 
         verify(lecturerRepository).findById(1L);
@@ -101,9 +113,11 @@ class LecturerServiceTest {
 
     @Test
     void getById_deberiaLanzarExcepcionCuandoNoExiste() {
+        // Arrange
         when(lecturerRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
+        // Act + Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> lecturerService.getById(99L)
@@ -114,23 +128,28 @@ class LecturerServiceTest {
 
     @Test
     void delete_deberiaEliminarDocenteCuandoExiste() {
+        // Arrange
         Lecturer lecturer = new Lecturer("Juan Perez");
         lecturer.setId(1L);
 
         when(lecturerRepository.findById(1L))
                 .thenReturn(Optional.of(lecturer));
 
-        lecturerService.delete(1L);
+        // Act
+        assertDoesNotThrow(() -> lecturerService.delete(1L));
 
+        // Assert
         verify(lecturerRepository).findById(1L);
         verify(lecturerRepository).delete(lecturer);
     }
 
     @Test
     void delete_deberiaLanzarExcepcionCuandoNoExiste() {
+        // Arrange
         when(lecturerRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
+        // Act + Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> lecturerService.delete(99L)
@@ -140,43 +159,42 @@ class LecturerServiceTest {
                 .delete(any(Lecturer.class));
     }
 
-   @Test
-void assignCourse_deberiaAsignarCursoAlDocente() {
-    Lecturer lecturer = new Lecturer("Juan Perez");
-    lecturer.setId(1L);
+    @Test
+    void assignCourse_deberiaAsignarCursoAlDocente() {
+        // Arrange
+        Lecturer lecturer = new Lecturer("Juan Perez");
+        lecturer.setId(1L);
 
-    Course course = new Course("Programacion", "PRG001");
-    course.setId(10L);
+        Course course = new Course("Programacion", "PRG001");
+        course.setId(10L);
 
-    when(lecturerRepository.findById(1L))
-            .thenReturn(Optional.of(lecturer));
+        when(lecturerRepository.findById(1L))
+                .thenReturn(Optional.of(lecturer));
 
-    when(courseRepository.findById(10L))
-            .thenReturn(Optional.of(course));
+        when(courseRepository.findById(10L))
+                .thenReturn(Optional.of(course));
 
-    LecturerResponse response =
-            lecturerService.assignCourse(1L, 10L);
+        // Act
+        LecturerResponse response =
+                lecturerService.assignCourse(1L, 10L);
 
-    assertNotNull(response);
+        // Assert
+        assertNotNull(response);
+        assertSame(lecturer, course.getLecturer());
+        assertTrue(lecturer.getCourses().contains(course));
 
-    // Verificar que el curso quedó asignado al docente
-    assertSame(lecturer, course.getLecturer());
-
-    // Verificar que el curso se agregó a la lista del docente
-    assertTrue(lecturer.getCourses().contains(course));
-
-    // Verificar que se guardó el curso
-    verify(courseRepository).save(course);
-
-    verify(lecturerRepository).findById(1L);
-    verify(courseRepository).findById(10L);
-}
+        verify(courseRepository).save(course);
+        verify(lecturerRepository).findById(1L);
+        verify(courseRepository).findById(10L);
+    }
 
     @Test
     void assignCourse_deberiaLanzarExcepcionSiNoExisteElDocente() {
+        // Arrange
         when(lecturerRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
+        // Act + Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> lecturerService.assignCourse(99L, 10L)
@@ -191,6 +209,7 @@ void assignCourse_deberiaAsignarCursoAlDocente() {
 
     @Test
     void assignCourse_deberiaLanzarExcepcionSiNoExisteElCurso() {
+        // Arrange
         Lecturer lecturer = new Lecturer("Juan Perez");
         lecturer.setId(1L);
 
@@ -200,6 +219,7 @@ void assignCourse_deberiaAsignarCursoAlDocente() {
         when(courseRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
+        // Act + Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> lecturerService.assignCourse(1L, 99L)
@@ -213,6 +233,7 @@ void assignCourse_deberiaAsignarCursoAlDocente() {
 
     @Test
     void getById_deberiaConvertirDepartamentoYCurso() {
+        // Arrange
         Lecturer lecturer = new Lecturer("Juan Perez");
         lecturer.setId(1L);
 
@@ -228,9 +249,11 @@ void assignCourse_deberiaAsignarCursoAlDocente() {
         when(lecturerRepository.findById(1L))
                 .thenReturn(Optional.of(lecturer));
 
+        // Act
         LecturerResponse response =
                 lecturerService.getById(1L);
 
+        // Assert
         assertNotNull(response);
 
         verify(lecturerRepository).findById(1L);

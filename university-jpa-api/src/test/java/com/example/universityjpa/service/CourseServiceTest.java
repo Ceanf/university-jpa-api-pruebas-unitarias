@@ -1,4 +1,3 @@
-
 package com.example.universityjpa.service;
 
 import com.example.universityjpa.dto.CourseResponse;
@@ -19,6 +18,7 @@ import static org.mockito.Mockito.*;
 import com.example.universityjpa.entity.Student;
 
 import java.util.List;
+
 @ExtendWith(MockitoExtension.class)
 class CourseServiceTest {
 
@@ -81,7 +81,7 @@ class CourseServiceTest {
         when(courseRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
-        // Actuar y comprobar
+        // Act + Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> courseService.getById(99L)
@@ -90,188 +90,212 @@ class CourseServiceTest {
         verify(courseRepository).findById(99L);
     }
 
-  @Test
-void getAll_deberiaRetornarTodosLosCursos() {
-    Course curso1 = new Course("Programacion", "PRG001");
-    curso1.setId(1L);
+    @Test
+    void getAll_deberiaRetornarTodosLosCursos() {
+        // Arrange
+        Course curso1 = new Course("Programacion", "PRG001");
+        curso1.setId(1L);
 
-    Course curso2 = new Course("Bases de Datos", "BD001");
-    curso2.setId(2L);
+        Course curso2 = new Course("Bases de Datos", "BD001");
+        curso2.setId(2L);
 
-    when(courseRepository.findAll())
-            .thenReturn(List.of(curso1, curso2));
+        when(courseRepository.findAll())
+                .thenReturn(List.of(curso1, curso2));
 
-    CourseResponse[] respuestas = courseService.getAll();
+        // Act
+        CourseResponse[] respuestas = courseService.getAll();
 
-    assertEquals(2, respuestas.length);
-    assertEquals("Programacion", respuestas[0].getTitle());
-    assertEquals("Bases de Datos", respuestas[1].getTitle());
+        // Assert
+        assertEquals(2, respuestas.length);
+        assertEquals("Programacion", respuestas[0].getTitle());
+        assertEquals("Bases de Datos", respuestas[1].getTitle());
 
-    verify(courseRepository).findAll();
-}
+        verify(courseRepository).findAll();
+    }
 
-@Test
-void getAll_deberiaRetornarArregloVacioCuandoNoHayCursos() {
-    when(courseRepository.findAll())
-            .thenReturn(List.of());
+    @Test
+    void getAll_deberiaRetornarArregloVacioCuandoNoHayCursos() {
+        // Arrange
+        when(courseRepository.findAll())
+                .thenReturn(List.of());
 
-    CourseResponse[] respuestas = courseService.getAll();
+        // Act
+        CourseResponse[] respuestas = courseService.getAll();
 
-    assertEquals(0, respuestas.length);
+        // Assert
+        assertEquals(0, respuestas.length);
 
-    verify(courseRepository).findAll();
-}
-@Test
-void delete_deberiaEliminarCursoCuandoExiste() {
-    Course course = new Course("Programacion", "PRG001");
-    course.setId(1L);
+        verify(courseRepository).findAll();
+    }
 
-    when(courseRepository.findById(1L))
-            .thenReturn(Optional.of(course));
+    @Test
+    void delete_deberiaEliminarCursoCuandoExiste() {
+        // Arrange
+        Course course = new Course("Programacion", "PRG001");
+        course.setId(1L);
 
-    courseService.delete(1L);
+        when(courseRepository.findById(1L))
+                .thenReturn(Optional.of(course));
 
-    verify(courseRepository).findById(1L);
-    verify(courseRepository).delete(course);
-}
+        // Act
+        assertDoesNotThrow(() -> courseService.delete(1L));
 
-@Test
-void delete_deberiaLanzarExcepcionCuandoCursoNoExiste() {
-    when(courseRepository.findById(99L))
-            .thenReturn(Optional.empty());
+        // Assert
+        verify(courseRepository).findById(1L);
+        verify(courseRepository).delete(course);
+    }
 
-    assertThrows(
-            ResourceNotFoundException.class,
-            () -> courseService.delete(99L)
-    );
+    @Test
+    void delete_deberiaLanzarExcepcionCuandoCursoNoExiste() {
+        // Arrange
+        when(courseRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-    verify(courseRepository).findById(99L);
-    verify(courseRepository, never()).delete(any(Course.class));
-}
+        // Act + Assert
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> courseService.delete(99L)
+        );
 
-@Test
-void enrollStudent_deberiaMatricularEstudianteCorrectamente() {
-    Course course = new Course("Programacion", "PRG001");
-    course.setId(1L);
+        verify(courseRepository).findById(99L);
+        verify(courseRepository, never()).delete(any(Course.class));
+    }
 
-    Student student = new Student();
-    student.setId(10L);
+    @Test
+    void enrollStudent_deberiaMatricularEstudianteCorrectamente() {
+        // Arrange
+        Course course = new Course("Programacion", "PRG001");
+        course.setId(1L);
 
-    when(courseRepository.findById(1L))
-            .thenReturn(Optional.of(course));
+        Student student = new Student();
+        student.setId(10L);
 
-    when(studentRepository.findById(10L))
-            .thenReturn(Optional.of(student));
+        when(courseRepository.findById(1L))
+                .thenReturn(Optional.of(course));
 
-    when(courseRepository.save(course))
-            .thenReturn(course);
+        when(studentRepository.findById(10L))
+                .thenReturn(Optional.of(student));
 
-    CourseResponse response =
-            courseService.enrollStudent(1L, 10L);
+        when(courseRepository.save(course))
+                .thenReturn(course);
 
-    assertNotNull(response);
-    assertEquals(1L, response.getId());
+        // Act
+        CourseResponse response =
+                courseService.enrollStudent(1L, 10L);
 
-    assertTrue(course.getStudents().contains(student));
-    assertTrue(student.getCourses().contains(course));
+        // Assert
+        assertNotNull(response);
+        assertEquals(1L, response.getId());
 
-    verify(courseRepository).findById(1L);
-    verify(studentRepository).findById(10L);
-    verify(courseRepository).save(course);
-}
+        assertTrue(course.getStudents().contains(student));
+        assertTrue(student.getCourses().contains(course));
 
-@Test
-void enrollStudent_noDeberiaDuplicarAlMatricularElMismoEstudianteDosVeces() {
-    Course course = new Course("Programacion", "PRG001");
-    course.setId(1L);
+        verify(courseRepository).findById(1L);
+        verify(studentRepository).findById(10L);
+        verify(courseRepository).save(course);
+    }
 
-    Student student = new Student();
-    student.setId(10L);
+    @Test
+    void enrollStudent_noDeberiaDuplicarAlMatricularElMismoEstudianteDosVeces() {
+        // Arrange
+        Course course = new Course("Programacion", "PRG001");
+        course.setId(1L);
 
-    when(courseRepository.findById(1L))
-            .thenReturn(Optional.of(course));
+        Student student = new Student();
+        student.setId(10L);
 
-    when(studentRepository.findById(10L))
-            .thenReturn(Optional.of(student));
+        when(courseRepository.findById(1L))
+                .thenReturn(Optional.of(course));
 
-    when(courseRepository.save(course))
-            .thenReturn(course);
+        when(studentRepository.findById(10L))
+                .thenReturn(Optional.of(student));
 
-    courseService.enrollStudent(1L, 10L);
-    courseService.enrollStudent(1L, 10L);
+        when(courseRepository.save(course))
+                .thenReturn(course);
 
-    assertEquals(1, course.getStudents().size());
-    assertEquals(1, student.getCourses().size());
+        // Act
+        courseService.enrollStudent(1L, 10L);
+        courseService.enrollStudent(1L, 10L);
 
-    verify(courseRepository, times(2)).save(course);
-}
+        // Assert
+        // department.getStudents() es un Set, no un List: a diferencia de
+        // DepartmentService.addLecturer (que usa List y si duplica), aqui
+        // llamar dos veces con el mismo estudiante no lo agrega dos veces.
+        assertEquals(1, course.getStudents().size());
+        assertEquals(1, student.getCourses().size());
 
-@Test
-void enrollStudent_deberiaLanzarExcepcionCuandoCursoNoExiste() {
-    when(courseRepository.findById(99L))
-            .thenReturn(Optional.empty());
+        verify(courseRepository, times(2)).save(course);
+    }
 
-    assertThrows(
-            ResourceNotFoundException.class,
-            () -> courseService.enrollStudent(99L, 10L)
-    );
+    @Test
+    void enrollStudent_deberiaLanzarExcepcionCuandoCursoNoExiste() {
+        // Arrange
+        when(courseRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-    verify(courseRepository).findById(99L);
-    verify(studentRepository, never()).findById(anyLong());
-    verify(courseRepository, never()).save(any(Course.class));
-}
+        // Act + Assert
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> courseService.enrollStudent(99L, 10L)
+        );
 
-@Test
-void enrollStudent_deberiaLanzarExcepcionCuandoEstudianteNoExiste() {
-    Course course = new Course("Programacion", "PRG001");
-    course.setId(1L);
+        verify(courseRepository).findById(99L);
+        verify(studentRepository, never()).findById(anyLong());
+        verify(courseRepository, never()).save(any(Course.class));
+    }
 
-    when(courseRepository.findById(1L))
-            .thenReturn(Optional.of(course));
+    @Test
+    void enrollStudent_deberiaLanzarExcepcionCuandoEstudianteNoExiste() {
+        // Arrange
+        Course course = new Course("Programacion", "PRG001");
+        course.setId(1L);
 
-    when(studentRepository.findById(99L))
-            .thenReturn(Optional.empty());
+        when(courseRepository.findById(1L))
+                .thenReturn(Optional.of(course));
 
-    assertThrows(
-            ResourceNotFoundException.class,
-            () -> courseService.enrollStudent(1L, 99L)
-    );
+        when(studentRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-    verify(courseRepository).findById(1L);
-    verify(studentRepository).findById(99L);
-    verify(courseRepository, never()).save(any(Course.class));
-}
+        // Act + Assert
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> courseService.enrollStudent(1L, 99L)
+        );
 
-@Test
-void getById_deberiaConvertirDocenteYEstudiantes() {
-    Course course = new Course("Programacion", "PRG001");
-    course.setId(1L);
+        verify(courseRepository).findById(1L);
+        verify(studentRepository).findById(99L);
+        verify(courseRepository, never()).save(any(Course.class));
+    }
 
-    Lecturer lecturer = mock(Lecturer.class);
-    when(lecturer.getId()).thenReturn(5L);
-    when(lecturer.getName()).thenReturn("Juan Perez");
+    @Test
+    void getById_deberiaConvertirDocenteYEstudiantes() {
+        // Arrange
+        Course course = new Course("Programacion", "PRG001");
+        course.setId(1L);
 
-    Student student = new Student();
-    student.setId(10L);
-    student.setName("Ana Lopez");
+        Lecturer lecturer = mock(Lecturer.class);
+        when(lecturer.getId()).thenReturn(5L);
+        when(lecturer.getName()).thenReturn("Juan Perez");
 
-    course.setLecturer(lecturer);
-    course.getStudents().add(student);
+        Student student = new Student();
+        student.setId(10L);
+        student.setName("Ana Lopez");
 
-    when(courseRepository.findById(1L))
-            .thenReturn(Optional.of(course));
+        course.setLecturer(lecturer);
+        course.getStudents().add(student);
 
-    CourseResponse response = courseService.getById(1L);
+        when(courseRepository.findById(1L))
+                .thenReturn(Optional.of(course));
 
-    assertNotNull(response);
+        // Act
+        CourseResponse response = courseService.getById(1L);
 
-    // Verificar que se convirtió el docente
-    assertNotNull(response.getLecturer());
+        // Assert
+        assertNotNull(response);
+        assertNotNull(response.getLecturer());
+        assertNotNull(response.getStudents());
+        assertEquals(1, response.getStudents().length);
 
-    // Verificar que se convirtió el estudiante
-    assertNotNull(response.getStudents());
-    assertEquals(1, response.getStudents().length);
-
-    verify(courseRepository).findById(1L);
-}
+        verify(courseRepository).findById(1L);
+    }
 }

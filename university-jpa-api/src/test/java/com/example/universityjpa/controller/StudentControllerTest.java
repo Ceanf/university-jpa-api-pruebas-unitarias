@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 public class StudentControllerTest {
@@ -30,28 +31,34 @@ public class StudentControllerTest {
     // Prueba que el controlador cree un estudiante correctamente
     @Test
     public void testCreateStudent() {
+        // Arrange
         StudentRequest request = new StudentRequest("Ana Lopez");
         StudentResponse expectedResponse =
                 new StudentResponse(1L, "Ana Lopez", null, null);
 
         when(studentService.create("Ana Lopez")).thenReturn(expectedResponse);
 
+        // Act
         StudentResponse result = studentController.create(request);
 
+        // Assert
         assertEquals(expectedResponse, result);
     }
 
     // Prueba que el controlador retorne todos los estudiantes
     @Test
     public void testGetAllStudents() {
+        // Arrange
         StudentResponse student1 = new StudentResponse(1L, "Ana Lopez", null, null);
         StudentResponse student2 = new StudentResponse(2L, "Carlos Ruiz", null, null);
         StudentResponse[] expectedResponses = new StudentResponse[]{student1, student2};
 
         when(studentService.getAll()).thenReturn(expectedResponses);
 
+        // Act
         StudentResponse[] result = studentController.getAll();
 
+        // Assert
         assertEquals(2, result.length);
         assertEquals(student1, result[0]);
         assertEquals(student2, result[1]);
@@ -60,24 +67,34 @@ public class StudentControllerTest {
     // Prueba que el controlador retorne un estudiante por su id
     @Test
     public void testGetStudentById() {
+        // Arrange
         Long id = 1L;
         StudentResponse expectedResponse = new StudentResponse(id, "Ana Lopez", null, null);
 
         when(studentService.getById(id)).thenReturn(expectedResponse);
 
+        // Act
         StudentResponse result = studentController.getById(id);
 
+        // Assert
         assertEquals(expectedResponse, result);
     }
 
     // Prueba que el controlador elimine un estudiante
     @Test
     public void testDeleteStudent() {
+        // Arrange
         Long id = 1L;
         doNothing().when(studentService).delete(id);
 
-        studentController.delete(id);
+        // Act
+        try {
+            studentController.delete(id);
+        } catch (Exception e) {
+            fail("No se esperaba una excepcion: " + e.getMessage());
+        }
 
+        // Assert
         verify(studentService).delete(id);
     }
 }

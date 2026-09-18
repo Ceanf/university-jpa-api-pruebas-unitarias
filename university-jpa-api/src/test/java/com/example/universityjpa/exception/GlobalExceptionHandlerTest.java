@@ -15,15 +15,17 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleNotFound_deberiaRetornarError404() {
+        // Arrange
         ResourceNotFoundException exception =
                 new ResourceNotFoundException("Student not found");
 
+        // Act
         ResponseEntity<Map<String, Object>> response =
                 handler.handleNotFound(exception);
 
+        // Assert
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNotNull(response.getBody());
-
         assertEquals(404, response.getBody().get("status"));
         assertEquals("Not Found", response.getBody().get("error"));
         assertEquals("Student not found", response.getBody().get("message"));
@@ -32,15 +34,17 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleBadRequest_deberiaRetornarError400() {
+        // Arrange
         IllegalArgumentException exception =
                 new IllegalArgumentException("Invalid argument");
 
+        // Act
         ResponseEntity<Map<String, Object>> response =
                 handler.handleBadRequest(exception);
 
+        // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
-
         assertEquals(400, response.getBody().get("status"));
         assertEquals("Bad Request", response.getBody().get("error"));
         assertEquals("Invalid argument", response.getBody().get("message"));

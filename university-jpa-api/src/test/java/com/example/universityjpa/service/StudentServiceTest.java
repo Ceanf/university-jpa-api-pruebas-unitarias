@@ -33,15 +33,18 @@ class StudentServiceTest {
 
     @Test
     void create_deberiaCrearEstudianteCorrectamente() {
+        // Arrange
         Student student = new Student("Ana Lopez");
         student.setId(1L);
 
         when(studentRepository.save(any(Student.class)))
                 .thenReturn(student);
 
+        // Act
         StudentResponse response =
                 studentService.create("Ana Lopez");
 
+        // Assert
         assertNotNull(response);
 
         verify(studentRepository).save(any(Student.class));
@@ -49,6 +52,7 @@ class StudentServiceTest {
 
     @Test
     void getAll_deberiaRetornarTodosLosEstudiantes() {
+        // Arrange
         Student student1 = new Student("Ana Lopez");
         student1.setId(1L);
 
@@ -58,9 +62,11 @@ class StudentServiceTest {
         when(studentRepository.findAll())
                 .thenReturn(List.of(student1, student2));
 
+        // Act
         StudentResponse[] responses =
                 studentService.getAll();
 
+        // Assert
         assertNotNull(responses);
         assertEquals(2, responses.length);
 
@@ -69,12 +75,15 @@ class StudentServiceTest {
 
     @Test
     void getAll_deberiaRetornarArregloVacio() {
+        // Arrange
         when(studentRepository.findAll())
                 .thenReturn(List.of());
 
+        // Act
         StudentResponse[] responses =
                 studentService.getAll();
 
+        // Assert
         assertNotNull(responses);
         assertEquals(0, responses.length);
 
@@ -83,15 +92,18 @@ class StudentServiceTest {
 
     @Test
     void getById_deberiaRetornarEstudianteCuandoExiste() {
+        // Arrange
         Student student = new Student("Ana Lopez");
         student.setId(1L);
 
         when(studentRepository.findById(1L))
                 .thenReturn(Optional.of(student));
 
+        // Act
         StudentResponse response =
                 studentService.getById(1L);
 
+        // Assert
         assertNotNull(response);
 
         verify(studentRepository).findById(1L);
@@ -99,9 +111,11 @@ class StudentServiceTest {
 
     @Test
     void getById_deberiaLanzarExcepcionCuandoNoExiste() {
+        // Arrange
         when(studentRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
+        // Act + Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> studentService.getById(99L)
@@ -112,23 +126,28 @@ class StudentServiceTest {
 
     @Test
     void delete_deberiaEliminarEstudianteCuandoExiste() {
+        // Arrange
         Student student = new Student("Ana Lopez");
         student.setId(1L);
 
         when(studentRepository.findById(1L))
                 .thenReturn(Optional.of(student));
 
-        studentService.delete(1L);
+        // Act
+        assertDoesNotThrow(() -> studentService.delete(1L));
 
+        // Assert
         verify(studentRepository).findById(1L);
         verify(studentRepository).delete(student);
     }
 
     @Test
     void delete_deberiaLanzarExcepcionCuandoNoExiste() {
+        // Arrange
         when(studentRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
+        // Act + Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> studentService.delete(99L)
@@ -140,9 +159,9 @@ class StudentServiceTest {
 
     @Test
     void getById_deberiaConvertirDepartamentoYCurso() {
+        // Arrange
         Student student = new Student("Ana Lopez");
         student.setId(1L);
-
 
         Department department = new Department("Ingenieria");
         department.setId(5L);
@@ -156,9 +175,11 @@ class StudentServiceTest {
         when(studentRepository.findById(1L))
                 .thenReturn(Optional.of(student));
 
+        // Act
         StudentResponse response =
                 studentService.getById(1L);
 
+        // Assert
         assertNotNull(response);
 
         verify(studentRepository).findById(1L);

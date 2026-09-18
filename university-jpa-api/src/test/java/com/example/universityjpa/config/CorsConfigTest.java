@@ -12,12 +12,8 @@ class CorsConfigTest {
 
     @Test
     void corsConfigurer_deberiaConfigurarCorsCorrectamente() {
+        // Arrange
         CorsConfig corsConfig = new CorsConfig();
-
-        WebMvcConfigurer configurer =
-                corsConfig.corsConfigurer();
-
-        assertNotNull(configurer);
 
         CorsRegistry registry = mock(CorsRegistry.class);
         CorsRegistration registration = mock(CorsRegistration.class);
@@ -32,12 +28,16 @@ class CorsConfigTest {
                 "GET", "POST", "PUT", "DELETE", "OPTIONS"))
                 .thenReturn(registration);
 
+        // Act
+        WebMvcConfigurer configurer =
+                corsConfig.corsConfigurer();
         configurer.addCorsMappings(registry);
 
+        // Assert
+        assertNotNull(configurer);
+
         verify(registry).addMapping("/api/**");
-
         verify(registration).allowedOrigins("*");
-
         verify(registration).allowedMethods(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS");
     }

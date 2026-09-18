@@ -4,18 +4,17 @@ import com.example.universityjpa.dto.CreateRequests.LecturerRequest;
 import com.example.universityjpa.dto.LecturerResponse;
 import com.example.universityjpa.service.LecturerService;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Before;
+import org.junit.Test;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class LecturerControllerTest {
+public class LecturerControllerTest {
 
     @Mock
     private LecturerService lecturerService;
@@ -23,79 +22,77 @@ class LecturerControllerTest {
     @InjectMocks
     private LecturerController lecturerController;
 
-    @Test
-    void create_deberiaCrearDocente() {
-        LecturerRequest request =
-                new LecturerRequest("Juan Perez");
+    @Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
 
+    // Prueba que el controlador cree un docente correctamente
+    @Test
+    public void testCreateLecturer() {
+        LecturerRequest request = new LecturerRequest("Juan Perez");
         LecturerResponse expectedResponse =
-                mock(LecturerResponse.class);
+                new LecturerResponse(1L, "Juan Perez", null, null);
 
-        when(lecturerService.create("Juan Perez"))
-                .thenReturn(expectedResponse);
+        when(lecturerService.create("Juan Perez")).thenReturn(expectedResponse);
 
-        LecturerResponse response =
-                lecturerController.create(request);
+        LecturerResponse result = lecturerController.create(request);
 
-        assertSame(expectedResponse, response);
-
-        verify(lecturerService).create("Juan Perez");
+        assertEquals(expectedResponse, result);
     }
 
+    // Prueba que el controlador retorne todos los docentes
     @Test
-    void getAll_deberiaRetornarTodosLosDocentes() {
-        LecturerResponse[] expectedResponses =
-                new LecturerResponse[0];
+    public void testGetAllLecturers() {
+        LecturerResponse lecturer1 = new LecturerResponse(1L, "Juan Perez", null, null);
+        LecturerResponse lecturer2 = new LecturerResponse(2L, "Maria Lopez", null, null);
+        LecturerResponse[] expectedResponses = new LecturerResponse[]{lecturer1, lecturer2};
 
-        when(lecturerService.getAll())
-                .thenReturn(expectedResponses);
+        when(lecturerService.getAll()).thenReturn(expectedResponses);
 
-        LecturerResponse[] responses =
-                lecturerController.getAll();
+        LecturerResponse[] result = lecturerController.getAll();
 
-        assertSame(expectedResponses, responses);
-
-        verify(lecturerService).getAll();
+        assertEquals(2, result.length);
+        assertEquals(lecturer1, result[0]);
+        assertEquals(lecturer2, result[1]);
     }
 
+    // Prueba que el controlador retorne un docente por su id
     @Test
-    void getById_deberiaRetornarDocente() {
+    public void testGetLecturerById() {
+        Long id = 1L;
+        LecturerResponse expectedResponse = new LecturerResponse(id, "Juan Perez", null, null);
+
+        when(lecturerService.getById(id)).thenReturn(expectedResponse);
+
+        LecturerResponse result = lecturerController.getById(id);
+
+        assertEquals(expectedResponse, result);
+    }
+
+    // Prueba que el controlador elimine un docente
+    @Test
+    public void testDeleteLecturer() {
+        Long id = 1L;
+        doNothing().when(lecturerService).delete(id);
+
+        lecturerController.delete(id);
+
+        verify(lecturerService).delete(id);
+    }
+
+    // Prueba que el controlador asigne un curso al docente
+    @Test
+    public void testAssignCourse() {
+        Long lecturerId = 1L;
+        Long courseId = 10L;
         LecturerResponse expectedResponse =
-                mock(LecturerResponse.class);
+                new LecturerResponse(lecturerId, "Juan Perez", null, null);
 
-        when(lecturerService.getById(1L))
-                .thenReturn(expectedResponse);
+        when(lecturerService.assignCourse(lecturerId, courseId)).thenReturn(expectedResponse);
 
-        LecturerResponse response =
-                lecturerController.getById(1L);
+        LecturerResponse result = lecturerController.assignCourse(lecturerId, courseId);
 
-        assertSame(expectedResponse, response);
-
-        verify(lecturerService).getById(1L);
-    }
-
-    @Test
-    void delete_deberiaEliminarDocente() {
-        doNothing().when(lecturerService).delete(1L);
-
-        lecturerController.delete(1L);
-
-        verify(lecturerService).delete(1L);
-    }
-
-    @Test
-    void assignCourse_deberiaAsignarCurso() {
-        LecturerResponse expectedResponse =
-                mock(LecturerResponse.class);
-
-        when(lecturerService.assignCourse(1L, 10L))
-                .thenReturn(expectedResponse);
-
-        LecturerResponse response =
-                lecturerController.assignCourse(1L, 10L);
-
-        assertSame(expectedResponse, response);
-
-        verify(lecturerService).assignCourse(1L, 10L);
+        assertEquals(expectedResponse, result);
     }
 }

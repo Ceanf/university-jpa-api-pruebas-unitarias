@@ -4,18 +4,17 @@ import com.example.universityjpa.dto.CreateRequests.DepartmentRequest;
 import com.example.universityjpa.dto.DepartmentResponse;
 import com.example.universityjpa.service.DepartmentService;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Before;
+import org.junit.Test;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class DepartmentControllerTest {
+public class DepartmentControllerTest {
 
     @Mock
     private DepartmentService departmentService;
@@ -23,95 +22,92 @@ class DepartmentControllerTest {
     @InjectMocks
     private DepartmentController departmentController;
 
-    @Test
-    void create_deberiaCrearDepartamento() {
-        DepartmentRequest request =
-                new DepartmentRequest("Ingenieria");
+    @Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
 
+    // Prueba que el controlador cree un departamento correctamente
+    @Test
+    public void testCreateDepartment() {
+        DepartmentRequest request = new DepartmentRequest("Ingenieria");
         DepartmentResponse expectedResponse =
-                mock(DepartmentResponse.class);
+                new DepartmentResponse(1L, "Ingenieria", null, null);
 
-        when(departmentService.create("Ingenieria"))
-                .thenReturn(expectedResponse);
+        when(departmentService.create("Ingenieria")).thenReturn(expectedResponse);
 
-        DepartmentResponse response =
-                departmentController.create(request);
+        DepartmentResponse result = departmentController.create(request);
 
-        assertSame(expectedResponse, response);
-
-        verify(departmentService).create("Ingenieria");
+        assertEquals(expectedResponse, result);
     }
 
+    // Prueba que el controlador retorne todos los departamentos
     @Test
-    void getAll_deberiaRetornarTodosLosDepartamentos() {
-        DepartmentResponse[] expectedResponses =
-                new DepartmentResponse[0];
+    public void testGetAllDepartments() {
+        DepartmentResponse department1 = new DepartmentResponse(1L, "Ingenieria", null, null);
+        DepartmentResponse department2 = new DepartmentResponse(2L, "Ciencias", null, null);
+        DepartmentResponse[] expectedResponses = new DepartmentResponse[]{department1, department2};
 
-        when(departmentService.getAll())
-                .thenReturn(expectedResponses);
+        when(departmentService.getAll()).thenReturn(expectedResponses);
 
-        DepartmentResponse[] responses =
-                departmentController.getAll();
+        DepartmentResponse[] result = departmentController.getAll();
 
-        assertSame(expectedResponses, responses);
-
-        verify(departmentService).getAll();
+        assertEquals(2, result.length);
+        assertEquals(department1, result[0]);
+        assertEquals(department2, result[1]);
     }
 
+    // Prueba que el controlador retorne un departamento por su id
     @Test
-    void getById_deberiaRetornarDepartamento() {
+    public void testGetDepartmentById() {
+        Long id = 1L;
+        DepartmentResponse expectedResponse = new DepartmentResponse(id, "Ingenieria", null, null);
+
+        when(departmentService.getById(id)).thenReturn(expectedResponse);
+
+        DepartmentResponse result = departmentController.getById(id);
+
+        assertEquals(expectedResponse, result);
+    }
+
+    // Prueba que el controlador elimine un departamento
+    @Test
+    public void testDeleteDepartment() {
+        Long id = 1L;
+        doNothing().when(departmentService).delete(id);
+
+        departmentController.delete(id);
+
+        verify(departmentService).delete(id);
+    }
+
+    // Prueba que el controlador agregue un docente al departamento
+    @Test
+    public void testAddLecturer() {
+        Long departmentId = 1L;
+        Long lecturerId = 10L;
         DepartmentResponse expectedResponse =
-                mock(DepartmentResponse.class);
+                new DepartmentResponse(departmentId, "Ingenieria", null, null);
 
-        when(departmentService.getById(1L))
-                .thenReturn(expectedResponse);
+        when(departmentService.addLecturer(departmentId, lecturerId)).thenReturn(expectedResponse);
 
-        DepartmentResponse response =
-                departmentController.getById(1L);
+        DepartmentResponse result = departmentController.addLecturer(departmentId, lecturerId);
 
-        assertSame(expectedResponse, response);
-
-        verify(departmentService).getById(1L);
+        assertEquals(expectedResponse, result);
     }
 
+    // Prueba que el controlador agregue un estudiante al departamento
     @Test
-    void delete_deberiaEliminarDepartamento() {
-        doNothing().when(departmentService).delete(1L);
-
-        departmentController.delete(1L);
-
-        verify(departmentService).delete(1L);
-    }
-
-    @Test
-    void addLecturer_deberiaAgregarDocente() {
+    public void testAddStudent() {
+        Long departmentId = 1L;
+        Long studentId = 20L;
         DepartmentResponse expectedResponse =
-                mock(DepartmentResponse.class);
+                new DepartmentResponse(departmentId, "Ingenieria", null, null);
 
-        when(departmentService.addLecturer(1L, 10L))
-                .thenReturn(expectedResponse);
+        when(departmentService.addStudent(departmentId, studentId)).thenReturn(expectedResponse);
 
-        DepartmentResponse response =
-                departmentController.addLecturer(1L, 10L);
+        DepartmentResponse result = departmentController.addStudent(departmentId, studentId);
 
-        assertSame(expectedResponse, response);
-
-        verify(departmentService).addLecturer(1L, 10L);
-    }
-
-    @Test
-    void addStudent_deberiaAgregarEstudiante() {
-        DepartmentResponse expectedResponse =
-                mock(DepartmentResponse.class);
-
-        when(departmentService.addStudent(1L, 20L))
-                .thenReturn(expectedResponse);
-
-        DepartmentResponse response =
-                departmentController.addStudent(1L, 20L);
-
-        assertSame(expectedResponse, response);
-
-        verify(departmentService).addStudent(1L, 20L);
+        assertEquals(expectedResponse, result);
     }
 }

@@ -4,18 +4,17 @@ import com.example.universityjpa.dto.CreateRequests.StudentRequest;
 import com.example.universityjpa.dto.StudentResponse;
 import com.example.universityjpa.service.StudentService;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Before;
+import org.junit.Test;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class StudentControllerTest {
+public class StudentControllerTest {
 
     @Mock
     private StudentService studentService;
@@ -23,63 +22,62 @@ class StudentControllerTest {
     @InjectMocks
     private StudentController studentController;
 
-    @Test
-    void create_deberiaCrearEstudiante() {
-        StudentRequest request =
-                new StudentRequest("Ana Lopez");
+    @Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
 
+    // Prueba que el controlador cree un estudiante correctamente
+    @Test
+    public void testCreateStudent() {
+        StudentRequest request = new StudentRequest("Ana Lopez");
         StudentResponse expectedResponse =
-                mock(StudentResponse.class);
+                new StudentResponse(1L, "Ana Lopez", null, null);
 
-        when(studentService.create("Ana Lopez"))
-                .thenReturn(expectedResponse);
+        when(studentService.create("Ana Lopez")).thenReturn(expectedResponse);
 
-        StudentResponse response =
-                studentController.create(request);
+        StudentResponse result = studentController.create(request);
 
-        assertSame(expectedResponse, response);
-
-        verify(studentService).create("Ana Lopez");
+        assertEquals(expectedResponse, result);
     }
 
+    // Prueba que el controlador retorne todos los estudiantes
     @Test
-    void getAll_deberiaRetornarTodosLosEstudiantes() {
-        StudentResponse[] expectedResponses =
-                new StudentResponse[0];
+    public void testGetAllStudents() {
+        StudentResponse student1 = new StudentResponse(1L, "Ana Lopez", null, null);
+        StudentResponse student2 = new StudentResponse(2L, "Carlos Ruiz", null, null);
+        StudentResponse[] expectedResponses = new StudentResponse[]{student1, student2};
 
-        when(studentService.getAll())
-                .thenReturn(expectedResponses);
+        when(studentService.getAll()).thenReturn(expectedResponses);
 
-        StudentResponse[] responses =
-                studentController.getAll();
+        StudentResponse[] result = studentController.getAll();
 
-        assertSame(expectedResponses, responses);
-
-        verify(studentService).getAll();
+        assertEquals(2, result.length);
+        assertEquals(student1, result[0]);
+        assertEquals(student2, result[1]);
     }
 
+    // Prueba que el controlador retorne un estudiante por su id
     @Test
-    void getById_deberiaRetornarEstudiante() {
-        StudentResponse expectedResponse =
-                mock(StudentResponse.class);
+    public void testGetStudentById() {
+        Long id = 1L;
+        StudentResponse expectedResponse = new StudentResponse(id, "Ana Lopez", null, null);
 
-        when(studentService.getById(1L))
-                .thenReturn(expectedResponse);
+        when(studentService.getById(id)).thenReturn(expectedResponse);
 
-        StudentResponse response =
-                studentController.getById(1L);
+        StudentResponse result = studentController.getById(id);
 
-        assertSame(expectedResponse, response);
-
-        verify(studentService).getById(1L);
+        assertEquals(expectedResponse, result);
     }
 
+    // Prueba que el controlador elimine un estudiante
     @Test
-    void delete_deberiaEliminarEstudiante() {
-        doNothing().when(studentService).delete(1L);
+    public void testDeleteStudent() {
+        Long id = 1L;
+        doNothing().when(studentService).delete(id);
 
-        studentController.delete(1L);
+        studentController.delete(id);
 
-        verify(studentService).delete(1L);
+        verify(studentService).delete(id);
     }
 }

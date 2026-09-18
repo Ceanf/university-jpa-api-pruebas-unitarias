@@ -4,18 +4,17 @@ import com.example.universityjpa.dto.CourseResponse;
 import com.example.universityjpa.dto.CreateRequests.CourseRequest;
 import com.example.universityjpa.service.CourseService;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Before;
+import org.junit.Test;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class CourseControllerTest {
+public class CourseControllerTest {
 
     @Mock
     private CourseService courseService;
@@ -23,78 +22,72 @@ class CourseControllerTest {
     @InjectMocks
     private CourseController courseController;
 
-    @Test
-    void create_deberiaCrearCurso() {
-        CourseRequest request =
-                new CourseRequest("Programacion", "PRG001");
-
-        CourseResponse expectedResponse = mock(CourseResponse.class);
-
-        when(courseService.create("Programacion", "PRG001"))
-                .thenReturn(expectedResponse);
-
-        CourseResponse response =
-                courseController.create(request);
-
-        assertSame(expectedResponse, response);
-
-        verify(courseService).create("Programacion", "PRG001");
+    @Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void getAll_deberiaRetornarTodosLosCursos() {
-        CourseResponse[] expectedResponses =
-                new CourseResponse[0];
-
-        when(courseService.getAll())
-                .thenReturn(expectedResponses);
-
-        CourseResponse[] responses =
-                courseController.getAll();
-
-        assertSame(expectedResponses, responses);
-
-        verify(courseService).getAll();
-    }
-
-    @Test
-    void getById_deberiaRetornarCurso() {
+    public void testCreateCourse() {
+        CourseRequest request = new CourseRequest("Programacion", "PRG001");
         CourseResponse expectedResponse =
-                mock(CourseResponse.class);
+                new CourseResponse(1L, "Programacion", "PRG001", null, null);
 
-        when(courseService.getById(1L))
-                .thenReturn(expectedResponse);
+        when(courseService.create("Programacion", "PRG001")).thenReturn(expectedResponse);
 
-        CourseResponse response =
-                courseController.getById(1L);
+        CourseResponse result = courseController.create(request);
 
-        assertSame(expectedResponse, response);
-
-        verify(courseService).getById(1L);
+        assertEquals(expectedResponse, result);
     }
 
     @Test
-    void delete_deberiaEliminarCurso() {
-        doNothing().when(courseService).delete(1L);
+    public void testGetAllCourses() {
+        CourseResponse course1 = new CourseResponse(1L, "Programacion", "PRG001", null, null);
+        CourseResponse course2 = new CourseResponse(2L, "Bases de Datos", "BDD001", null, null);
+        CourseResponse[] expectedResponses = new CourseResponse[]{course1, course2};
 
-        courseController.delete(1L);
+        when(courseService.getAll()).thenReturn(expectedResponses);
 
-        verify(courseService).delete(1L);
+        CourseResponse[] result = courseController.getAll();
+
+        assertEquals(2, result.length);
+        assertEquals(course1, result[0]);
+        assertEquals(course2, result[1]);
     }
 
     @Test
-    void enrollStudent_deberiaMatricularEstudiante() {
+    public void testGetCourseById() {
+        Long id = 1L;
+        CourseResponse expectedResponse = new CourseResponse(id, "Programacion", "PRG001", null, null);
+
+        when(courseService.getById(id)).thenReturn(expectedResponse);
+
+        CourseResponse result = courseController.getById(id);
+
+        assertEquals(expectedResponse, result);
+    }
+
+    @Test
+    public void testDeleteCourse() {
+        Long id = 1L;
+        doNothing().when(courseService).delete(id);
+
+        courseController.delete(id);
+
+        verify(courseService).delete(id);
+    }
+
+    @Test
+    public void testEnrollStudent() {
+        Long courseId = 1L;
+        Long studentId = 10L;
         CourseResponse expectedResponse =
-                mock(CourseResponse.class);
+                new CourseResponse(courseId, "Programacion", "PRG001", null, null);
 
-        when(courseService.enrollStudent(1L, 10L))
-                .thenReturn(expectedResponse);
+        when(courseService.enrollStudent(courseId, studentId)).thenReturn(expectedResponse);
 
-        CourseResponse response =
-                courseController.enrollStudent(1L, 10L);
+        CourseResponse result = courseController.enrollStudent(courseId, studentId);
 
-        assertSame(expectedResponse, response);
-
-        verify(courseService).enrollStudent(1L, 10L);
+        assertEquals(expectedResponse, result);
     }
 }

@@ -181,6 +181,32 @@ void enrollStudent_deberiaMatricularEstudianteCorrectamente() {
 }
 
 @Test
+void enrollStudent_noDeberiaDuplicarAlMatricularElMismoEstudianteDosVeces() {
+    Course course = new Course("Programacion", "PRG001");
+    course.setId(1L);
+
+    Student student = new Student();
+    student.setId(10L);
+
+    when(courseRepository.findById(1L))
+            .thenReturn(Optional.of(course));
+
+    when(studentRepository.findById(10L))
+            .thenReturn(Optional.of(student));
+
+    when(courseRepository.save(course))
+            .thenReturn(course);
+
+    courseService.enrollStudent(1L, 10L);
+    courseService.enrollStudent(1L, 10L);
+
+    assertEquals(1, course.getStudents().size());
+    assertEquals(1, student.getCourses().size());
+
+    verify(courseRepository, times(2)).save(course);
+}
+
+@Test
 void enrollStudent_deberiaLanzarExcepcionCuandoCursoNoExiste() {
     when(courseRepository.findById(99L))
             .thenReturn(Optional.empty());
